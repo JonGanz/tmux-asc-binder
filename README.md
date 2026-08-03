@@ -5,9 +5,9 @@ CLI tracking the status of AI coding agents (Claude Code, etc.) — and surfaces
 scoped `@asc_*` user-options on panes, windows, and sessions, plus an optional fzf-based
 jump-to-agent picker.
 
-By design (see `GOAL.md`), installing this plugin changes **nothing visible** by default: no
-status-bar or window-label output is added until you reference an `@asc_*` option in your own
-`tmux.conf`. Every feature can be turned off independently.
+By design, installing this plugin changes **nothing visible** by default: no status-bar or
+window-label output is added until you reference an `@asc_*` option in your own `tmux.conf`.
+Every feature can be turned off independently.
 
 ## Requirements
 

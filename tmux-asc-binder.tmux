@@ -2,12 +2,12 @@
 # tmux-asc-binder entrypoint. Sourced by TPM (`set -g @plugin '.../tmux-asc-binder'`)
 # or manually (`run-shell '~/path/to/tmux-asc-binder.tmux'`).
 #
-# Per GOAL.md's design philosophy, this adds *zero* default status-bar/window
-# output: it only sets @asc_* user-options for the user's own config to
-# reference, plus an optional daemon and an optional jump-to-agent keybinding
-# (both individually toggleable and both off-by-default-safe: the daemon
-# no-ops if agent-status isn't found, and the keybinding is only registered
-# when @asc_jump_enabled is on).
+# By design, this adds *zero* default status-bar/window output: it only sets
+# @asc_* user-options for the user's own config to reference, plus an
+# optional daemon and an optional jump-to-agent keybinding (both individually
+# toggleable and both off-by-default-safe: the daemon no-ops if agent-status
+# isn't found, and the keybinding is only registered when @asc_jump_enabled
+# is on).
 set -uo pipefail
 
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
