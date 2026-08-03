@@ -26,7 +26,7 @@ teardown() {
 	asc_stub_agent_status "$fixture"
 
 	# Select the second row (asc-sess-2 / project-b).
-	selected_line="$(printf 'asc-sess-2\tclaudecode\twaiting_for_input\tWaiting on permission to run tests\t/home/dev/project-b\t%s\t%s\t%s' \
+	selected_line="$(printf 'waiting_for_input\tWaiting on permission to run tests\tclaudecode\t/home/dev/project-b\tasc-sess-2\t%s\t%s\t%s' \
 		"$session2" "$window2" "$pane2")"
 	asc_stub_fzf_select "$selected_line"
 
@@ -37,6 +37,60 @@ teardown() {
 	grep -qF "select-window -t $window2" "$TMUX_CALL_LOG"
 	grep -qF "select-pane -t $pane2" "$TMUX_CALL_LOG"
 	! grep -qF "switch-client -t $session1" "$TMUX_CALL_LOG"
+}
+
+@test "jump.sh falls back to session:window when no task_summary is available" {
+	pane_id="$(asc_tmux display-message -p -t main:0.0 '#{pane_id}')"
+	window_id="$(asc_tmux display-message -p -t main:0.0 '#{window_id}')"
+	session_id="$(asc_tmux display-message -p -t main '#{session_id}')"
+
+	fixture="$(asc_render_fixture "$FIXTURES_DIR/jump-list-no-summary.json.tmpl" \
+		SESSION_ID "$session_id" WINDOW_ID "$window_id" PANE_ID "$pane_id")"
+	asc_stub_agent_status "$fixture"
+
+	# Stub fzf to record everything it was given on stdin (the sole row) to
+	# a log file, and pass it straight through as the "selection", so we can
+	# inspect the label text the row was built with.
+	rows_log="$(mktemp)"
+	cat >"$TEST_STUB_BIN/fzf" <<EOF
+#!/usr/bin/env bash
+tee "$rows_log"
+EOF
+	chmod +x "$TEST_STUB_BIN/fzf"
+
+	run "$SCRIPTS_DIR/jump.sh"
+	[ "$status" -eq 0 ]
+	# The fixture's multiplexer session/window names are "main"/"2", and it
+	# has no task_summary, so the label column should fall back to that.
+	grep -qF $'idle\tmain:2\tclaudecode\t/home/dev/project-c' "$rows_log"
+}
+
+@test "jump.sh previews the tmux pane content, not agent-status show" {
+	pane1="$(asc_tmux display-message -p -t main:0.0 '#{pane_id}')"
+	window1="$(asc_tmux display-message -p -t main:0.0 '#{window_id}')"
+	session1="$(asc_tmux display-message -p -t main '#{session_id}')"
+
+	fixture="$(asc_render_fixture "$FIXTURES_DIR/jump-list.json.tmpl" \
+		SESSION1_ID "$session1" WINDOW1_ID "$window1" PANE1_ID "$pane1" \
+		SESSION2_ID "$session1" WINDOW2_ID "$window1" PANE2_ID "$pane1")"
+	asc_stub_agent_status "$fixture"
+
+	# Capture the exact fzf invocation instead of a selection, so we can
+	# assert on the --preview command it was given.
+	cat >"$TEST_STUB_BIN/fzf" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+printf '%s\n' "$*" >"$FZF_ARGS_LOG"
+EOF
+	chmod +x "$TEST_STUB_BIN/fzf"
+	FZF_ARGS_LOG="$(mktemp)"
+	export FZF_ARGS_LOG
+
+	run "$SCRIPTS_DIR/jump.sh"
+	[ "$status" -eq 0 ]
+
+	grep -qF "tmux capture-pane" "$FZF_ARGS_LOG"
+	! grep -qF "agent-status show" "$FZF_ARGS_LOG"
 }
 
 @test "jump.sh exits cleanly with no action when the user cancels the picker" {

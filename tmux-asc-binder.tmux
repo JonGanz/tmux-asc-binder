@@ -33,7 +33,7 @@ main() {
 	if asc_bool jump_enabled on; then
 		local jump_key
 		jump_key="$(asc_get_option jump_key a)"
-		tmux bind-key "$jump_key" display-popup -E "$SCRIPTS_DIR/jump.sh"
+		tmux bind-key "$jump_key" display-popup -w 80% -h 80% -E "$SCRIPTS_DIR/jump.sh"
 	fi
 }
 

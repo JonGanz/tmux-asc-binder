@@ -17,6 +17,15 @@ asc_kill_stale_daemon() {
 	old_pid="$(cat "$PIDFILE" 2>/dev/null || true)"
 	if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
 		kill "$old_pid" 2>/dev/null || true
+		# The old daemon may be mid-refresh (or otherwise deferring the
+		# signal until its current foreground command completes), so give
+		# it a bounded grace period to exit on its own before escalating.
+		local waited=0
+		while kill -0 "$old_pid" 2>/dev/null && [ "$waited" -lt 30 ]; do
+			sleep 0.1
+			waited=$((waited + 1))
+		done
+		kill -9 "$old_pid" 2>/dev/null || true
 	fi
 	rm -f "$PIDFILE"
 }

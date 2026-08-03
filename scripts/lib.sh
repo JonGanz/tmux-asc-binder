@@ -90,6 +90,13 @@ asc_icon() {
 	asc_get_option "icon_${state}" "$default"
 }
 
+# asc_sanitize_key <string> prints <string> with every character outside
+# [A-Za-z0-9_] replaced with "_", for safely embedding arbitrary provider
+# names/rate-limit window labels into a tmux user-option name.
+asc_sanitize_key() {
+	printf '%s' "$1" | tr -c 'A-Za-z0-9_' '_'
+}
+
 # asc_state_dir prints (and ensures exists) the scratch directory used to
 # persist state across refresh ticks (e.g. the previous-targets snapshot),
 # honoring $XDG_STATE_HOME per XDG Base Directory conventions.

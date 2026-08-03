@@ -28,7 +28,11 @@ exec "$REAL_TMUX" -L "$TEST_SOCKET" "\$@"
 EOF
 	chmod +x "$TEST_STUB_BIN/tmux"
 
-	"$REAL_TMUX" -L "$TEST_SOCKET" new-session -d -s main -x 80 -y 24
+	# -f /dev/null: don't source the developer's real tmux.conf (which may
+	# itself configure this very plugin, e.g. @asc_refresh_interval) into
+	# our throwaway test server -- tests must control every option value
+	# themselves for isolation.
+	"$REAL_TMUX" -L "$TEST_SOCKET" -f /dev/null new-session -d -s main -x 80 -y 24
 }
 
 asc_test_teardown() {
@@ -44,17 +48,26 @@ asc_tmux() {
 	"$REAL_TMUX" -L "$TEST_SOCKET" "$@"
 }
 
-# asc_stub_agent_status <fixture-file> installs a fake `agent-status`
-# executable on PATH that prints the given fixture file's contents for
-# `list --json` / `list --json --all`, and a fixed string for `show <id>`.
+# asc_stub_agent_status <list-fixture-file> [<ratelimits-fixture-file>]
+# installs a fake `agent-status` executable on PATH that prints the given
+# fixture file's contents for `list --json` / `list --json --all`, a fixed
+# string for `show <id>`, and (if given) the second fixture's contents for
+# `rate-limits --json` (defaulting to "[]" when omitted).
 asc_stub_agent_status() {
 	local fixture="$1"
+	local ratelimits_fixture="${2:-}"
 	cat >"$TEST_STUB_BIN/agent-status" <<EOF
 #!/usr/bin/env bash
 if [ "\$1" = "list" ]; then
 	cat "$fixture"
 elif [ "\$1" = "show" ]; then
 	echo "stub show output for \$2"
+elif [ "\$1" = "rate-limits" ]; then
+	if [ -n "$ratelimits_fixture" ]; then
+		cat "$ratelimits_fixture"
+	else
+		echo '[]'
+	fi
 fi
 EOF
 	chmod +x "$TEST_STUB_BIN/agent-status"

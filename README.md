@@ -77,11 +77,36 @@ set -g window-status-format '#{window_index}#{?@asc_window_icon, #{@asc_window_i
 set -g status-right '#{?@asc_session_icon,#{@asc_session_icon} ,}%H:%M'
 ```
 
+### Rate limits (`agent-status rate-limits`)
+
+Rate limits (e.g. Claude's 5h/7d usage windows) are account-level, not tied to any pane/window/
+session, so they're exposed as **global** options keyed by provider and window label instead:
+
+| Option                                              | Description                                  |
+|------------------------------------------------------|-----------------------------------------------|
+| `@asc_ratelimit_<provider>_<window>_pct`             | Usage for that window, e.g. `23%`.             |
+| `@asc_ratelimit_<provider>_<window>_resets_in`       | Time until reset, e.g. `2h33m` or `6d4h3m` (unset if the provider didn't report a reset time). |
+| `@asc_ratelimit_<provider>_<window>_resets_at`       | Raw RFC3339 reset timestamp (unset if unavailable). |
+| `@asc_ratelimit_<provider>_summary`                  | All of that provider's windows pre-joined with `\| `, e.g. `5h 23% 2h33m \| 7d 14% 6d4h3m`. |
+
+`<provider>` and `<window>` are the raw values from `agent-status rate-limits --json`
+(e.g. `claudecode`, `5h`, `7d`) with any non-alphanumeric characters replaced by `_`. To render
+exactly `claude | 5h 23% 2h33m | 7d 14% 6d4h3m` in your status bar:
+
+```tmux
+set -g status-right 'claude | #{@asc_ratelimit_claudecode_summary}'
+```
+
+Like the pane/window/session options, these are only set while the provider is actually reporting
+rate limits, and are unset again if that stops (or `@asc_enabled` is turned off).
+
 ## Jump to agent
 
 `prefix + a` (configurable via `@asc_jump_key`) opens an fzf popup listing every tracked agent
-(live and stale), with a live preview (`agent-status show <id>`). Selecting one switches the
-current client to that agent's session, window, and pane — across sessions if needed. Set
+(live and stale). Each row shows the agent's state, a label (its task summary, falling back to
+`session:window` when no summary is available), provider, and working directory; the preview
+pane shows a live capture of the agent's actual tmux pane. Selecting a row switches the current
+client to that agent's session, window, and pane — across sessions if needed. Set
 `@asc_jump_enabled off` to disable the binding entirely.
 
 ## Development

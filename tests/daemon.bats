@@ -65,10 +65,9 @@ EOF
 	"$FAKE_SCRIPTS_DIR/daemon.sh" &
 	DAEMON_PID=$!
 
-	# The first daemon should be killed by the second's startup guard; give it
-	# up to ~2.5s since it may only act on the signal once its current
-	# interval sleep/refresh cycle completes.
-	for _ in $(seq 1 25); do
+	# The second daemon's startup guard sends TERM then, if needed, waits up
+	# to ~3s before escalating to KILL, so give this up to ~4.5s total.
+	for _ in $(seq 1 45); do
 		kill -0 "$first_pid" 2>/dev/null || break
 		sleep 0.1
 	done
