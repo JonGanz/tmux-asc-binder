@@ -63,13 +63,16 @@ asc_binary() {
 }
 
 # asc_priority <state> prints an integer priority for a Status.State value;
-# higher wins when bubbling up pane -> window -> session. Unknown/unrecognized
-# state strings get the lowest priority (same as "unknown").
+# higher wins when bubbling up pane -> window -> session. "blocked" (needs a
+# decision from you) outranks "active" (working, nothing needed from you
+# yet), which outranks "done" (turn finished, nothing pending either way).
+# Unknown/unrecognized state strings get the lowest priority (same as
+# "unknown").
 asc_priority() {
 	case "$1" in
-	waiting_for_input) printf '4' ;;
+	blocked) printf '4' ;;
 	active) printf '3' ;;
-	idle) printf '2' ;;
+	done) printf '2' ;;
 	unknown) printf '1' ;;
 	stopped) printf '0' ;;
 	*) printf '0' ;;
@@ -81,9 +84,9 @@ asc_priority() {
 asc_icon() {
 	local state="$1" default=""
 	case "$state" in
-	waiting_for_input) default='?' ;;
+	blocked) default='?' ;;
 	active) default='*' ;;
-	idle) default='-' ;;
+	done) default='-' ;;
 	stopped) default='x' ;;
 	*) default='.' ;;
 	esac

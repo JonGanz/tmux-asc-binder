@@ -47,9 +47,9 @@ run-shell ~/.tmux/plugins/tmux-asc-binder/tmux-asc-binder.tmux
 | `@asc_binary`           | *(PATH)*| Override path to the `agent-status` binary.                |
 | `@asc_jump_enabled`     | `on`    | Whether the jump-to-agent keybinding is registered at all.  |
 | `@asc_jump_key`         | `a`     | Key bound under `prefix` to open the jump-to-agent popup.   |
-| `@asc_icon_active`      | `*`     | Icon for `active` state.                                    |
-| `@asc_icon_idle`        | `-`     | Icon for `idle` state.                                      |
-| `@asc_icon_waiting_for_input` | `?` | Icon for `waiting_for_input` state.                       |
+| `@asc_icon_active`      | `*`     | Icon for `active` state (agent is working).                 |
+| `@asc_icon_done`        | `-`     | Icon for `done` state (turn finished, nothing pending).     |
+| `@asc_icon_blocked`     | `?`     | Icon for `blocked` state (needs a decision from you, e.g. a permission request). |
 | `@asc_icon_stopped`     | `x`     | Icon for `stopped` state.                                    |
 | `@asc_icon_unknown`     | `.`     | Icon for `unknown` state (and any state this plugin doesn't recognize). |
 
@@ -66,7 +66,9 @@ run-shell ~/.tmux/plugins/tmux-asc-binder/tmux-asc-binder.tmux
 | `@asc_session_icon`       | session | Configured icon for that state.                        |
 
 Priority order (highest wins when bubbling a pane's state up to its window/session):
-`waiting_for_input > active > idle > unknown > stopped`.
+`blocked > active > done > unknown > stopped`. `blocked` means the agent needs a decision from
+you (e.g. a permission request) and is the state worth actively alerting on; `done` means a turn
+finished with nothing pending on either end.
 
 These options are only set on panes/windows/sessions that currently have a tracked agent, and are
 unset again once that agent stops being tracked (agent exits, or `@asc_enabled` is turned off) —

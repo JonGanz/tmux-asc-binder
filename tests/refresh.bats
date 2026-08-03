@@ -48,12 +48,12 @@ teardown() {
 	run "$SCRIPTS_DIR/refresh.sh"
 	[ "$status" -eq 0 ]
 
-	# window1 has an idle pane and an active pane -> active wins
+	# window1 has a done pane and an active pane -> active wins
 	[ "$(asc_tmux show-options -w -v -t "$window1" @asc_window_state)" = "active" ]
-	# window2 only has the waiting_for_input pane
-	[ "$(asc_tmux show-options -w -v -t "$window2" @asc_window_state)" = "waiting_for_input" ]
+	# window2 only has the blocked pane
+	[ "$(asc_tmux show-options -w -v -t "$window2" @asc_window_state)" = "blocked" ]
 	# session bubbles up the highest of the two windows
-	[ "$(asc_tmux show-options -v -t "$session_id" @asc_session_state)" = "waiting_for_input" ]
+	[ "$(asc_tmux show-options -v -t "$session_id" @asc_session_state)" = "blocked" ]
 }
 
 @test "refresh.sh unsets options for a pane whose agent has gone away" {

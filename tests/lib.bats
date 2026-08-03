@@ -12,9 +12,9 @@ teardown() {
 }
 
 @test "asc_priority orders states highest-to-lowest as designed" {
-	[ "$(asc_priority waiting_for_input)" -gt "$(asc_priority active)" ]
-	[ "$(asc_priority active)" -gt "$(asc_priority idle)" ]
-	[ "$(asc_priority idle)" -gt "$(asc_priority unknown)" ]
+	[ "$(asc_priority blocked)" -gt "$(asc_priority active)" ]
+	[ "$(asc_priority active)" -gt "$(asc_priority done)" ]
+	[ "$(asc_priority done)" -gt "$(asc_priority unknown)" ]
 	[ "$(asc_priority unknown)" -gt "$(asc_priority stopped)" ]
 }
 

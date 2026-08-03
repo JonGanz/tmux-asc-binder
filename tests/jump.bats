@@ -26,7 +26,7 @@ teardown() {
 	asc_stub_agent_status "$fixture"
 
 	# Select the second row (asc-sess-2 / project-b).
-	selected_line="$(printf 'waiting_for_input\tWaiting on permission to run tests\tclaudecode\t/home/dev/project-b\tasc-sess-2\t%s\t%s\t%s' \
+	selected_line="$(printf 'blocked\tWaiting on permission to run tests\tclaudecode\t/home/dev/project-b\tasc-sess-2\t%s\t%s\t%s' \
 		"$session2" "$window2" "$pane2")"
 	asc_stub_fzf_select "$selected_line"
 
@@ -62,7 +62,7 @@ EOF
 	[ "$status" -eq 0 ]
 	# The fixture's multiplexer session/window names are "main"/"2", and it
 	# has no task_summary, so the label column should fall back to that.
-	grep -qF $'idle\tmain:2\tclaudecode\t/home/dev/project-c' "$rows_log"
+	grep -qF $'done\tmain:2\tclaudecode\t/home/dev/project-c' "$rows_log"
 }
 
 @test "jump.sh previews the tmux pane content, not agent-status show" {
