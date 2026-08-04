@@ -73,8 +73,9 @@ fi
 SELECTED="$(printf '%s\n' "$ROWS" | fzf \
 	--delimiter='\t' \
 	--with-nth=1,2,3,4 \
-	--preview='tmux capture-pane -pt {8} -S -200' \
-	--preview-window=right:50%)"
+	--ansi \
+	--preview='tmux capture-pane -e -pt {8} -S -200' \
+	--preview-window=right:50%:nowrap)"
 
 [ -n "$SELECTED" ] || exit 0
 
