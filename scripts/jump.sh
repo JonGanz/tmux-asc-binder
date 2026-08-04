@@ -23,16 +23,35 @@ fi
 LIST_JSON="$("$BIN" list --json --all 2>/dev/null || true)"
 [ -n "$LIST_JSON" ] || LIST_JSON="[]"
 
+# Records for panes that no longer exist at all (agent exited and nobody's
+# reused the pane, or the pane/window was killed outright) can't ever be
+# previewed or jumped to; drop them before any pane_id-based dedup runs.
+LIVE_PANES_JSON="$(tmux list-panes -a -F '#{pane_id}' 2>/dev/null | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+[ -n "$LIVE_PANES_JSON" ] || LIVE_PANES_JSON="[]"
+
 # Displayed columns: state/label/provider/cwd, where label is the agent's
 # task_summary, falling back to "session:window" (tmux names, not stable
 # ids) when no summary is available. Trailing hidden fields carry the ASC
 # session id and the stable tmux session_id/window_id/pane_id so the
 # selection can be mapped back to a real tmux target and previewed after
 # fzf returns.
-ROWS="$(printf '%s' "$LIST_JSON" | jq -r '
-  .[]
-  | select(.status.multiplexer.type == "tmux")
-  | select((.status.multiplexer.pane_id // "") != "")
+#
+# --all includes stale/finished records, and tmux pane_ids get reused once
+# a pane's agent exits, so multiple records can pile up for the same
+# pane_id — every one of them resolves to the same tmux target, so keeping
+# more than one is pure duplicate clutter (and only the most recent one's
+# capture-pane preview is guaranteed to match its own content, since older
+# records' panes may since have been overwritten by a later agent). Group
+# by pane_id and keep only the most recently started record per pane.
+ROWS="$(printf '%s' "$LIST_JSON" | jq -r --argjson live_panes "$LIVE_PANES_JSON" '
+  [ .[]
+    | select(.status.multiplexer.type == "tmux")
+    | select((.status.multiplexer.pane_id // "") != "")
+    | select(.status.multiplexer.pane_id as $pane_id | $live_panes | index($pane_id) != null)
+  ]
+  | group_by(.status.multiplexer.pane_id)
+  | map(max_by(.status.started_at))
+  | .[]
   | (.status.task_summary // "") as $summary
   | (if $summary != "" then $summary
      else (.status.multiplexer.session + ":" + .status.multiplexer.window)
