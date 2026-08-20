@@ -9,6 +9,10 @@ By design, installing this plugin changes **nothing visible** by default: no sta
 window-label output is added until you reference an `@asc_*` option in your own `tmux.conf`.
 Every feature can be turned off independently.
 
+## Disclaimer
+
+This repository's contents — code, tests, and documentation — are 100% LLM-produced.
+
 ## Requirements
 
 - [`agent-status-collector`](../agent-status-collector) (the `agent-status` binary) on `PATH`, or
